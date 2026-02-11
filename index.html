@@ -1,27 +1,48 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Juventude</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juventude da Igreja</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
+<header class="header">
   <h1>Juventude da Igreja</h1>
 </header>
 
-<section class="retreat">
+<section class="meta-section">
   <h2>🎯 Meta do Retiro</h2>
-  <p>Meta: R$ <span id="metaValor">0</span></p>
+  <p>Meta: R$ <span id="metaValor">3000</span></p>
   <p>Arrecadado: R$ <span id="valorAtual">0</span></p>
 
-  <div class="progress-bar">
-    <div class="progress" id="progress"></div>
+  <div class="barra-container">
+    <div id="barraProgresso" class="barra-progresso"></div>
   </div>
 </section>
 
+<section class="eventos">
+  <h2>📅 Próximos Eventos</h2>
+
+  <div class="card-evento">
+    <h3>🔥 Culto Jovem</h3>
+    <p>Sábado às 19:30</p>
+  </div>
+
+  <div class="card-evento">
+    <h3>🏕 Retiro Espiritual</h3>
+    <p>Data a confirmar</p>
+  </div>
+
+</section>
+
+<footer class="footer">
+  <p>© 2026 Juventude da Igreja</p>
+</footer>
+
+<script type="module" src="firebase.js"></script>
 <script type="module" src="app.js"></script>
+
 </body>
 </html>
