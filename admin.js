@@ -8,7 +8,8 @@ import {
   query,
   orderBy,
   addDoc,
-  Timestamp
+  Timestamp,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 window.login = function () {
@@ -17,12 +18,11 @@ window.login = function () {
   atualizarResumo();
 }
 
-// atualiza o valor arrecadado incrementando o campo 'atual' no Firestore
+// atualiza o valor arrecadado adicionando ao campo 'atual' no Firestore
 window.atualizarMeta = async function () {
   const novoValor = Number(document.getElementById("novoValor").value);
-  const novaMeta = Number(document.getElementById("novaMeta").value);
 
-  if (isNaN(novoValor)) {
+  if (isNaN(novoValor) || novoValor <= 0) {
     alert("Informe um valor válido para adicionar.");
     return;
   }
@@ -40,15 +40,14 @@ window.atualizarMeta = async function () {
     const atual = data.atual || 0;
     const novoTotal = atual + novoValor;
 
-    const updateData = { atual: novoTotal };
-    if (!isNaN(novaMeta) && novaMeta > 0) {
-      updateData.meta = novaMeta;
-    }
+    await updateDoc(ref, {
+      atual: novoTotal
+    });
 
-    await updateDoc(ref, updateData);
-    alert("Meta atualizada!");
+    document.getElementById("novoValor").value = "";
+    alert("Valor adicionado com sucesso!");
   } catch (error) {
-    alert("Erro ao atualizar meta: " + error.message);
+    alert("Erro ao atualizar: " + error.message);
   }
 };
 
@@ -121,25 +120,40 @@ async function atualizarResumo() {
       datasets: [{
         label: 'Valores',
         data: [totalEntradas, totalSaidas],
-        backgroundColor: ['#4caf50', '#f44336']
+        backgroundColor: ['#22c55e', '#ef4444'],
+        borderRadius: 5
       }]
     };
 
-    if (financeChart) {
-      financeChart.data = data;
-      financeChart.update();
-    } else {
-      financeChart = new Chart(ctx, {
-        type: 'bar',
-        data,
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true
+    const config = {
+      type: 'bar',
+      data,
+      options: {
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Entradas vs Saídas' },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const valor = context.parsed.y;
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+              }
             }
           }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
         }
-      });
+      }
+    };
+
+    if (financeChart) {
+      financeChart.data.datasets[0].data = [totalEntradas, totalSaidas];
+      financeChart.update();
+    } else {
+      financeChart = new Chart(ctx, config);
     }
   } catch (error) {
     console.error("Erro ao carregar resumo financeiro:", error);
@@ -175,6 +189,12 @@ async function adicionarEntrada() {
       data: Timestamp.now()
     });
 
+    // Also increment saldoAtual in controleFinanceiro/caixa
+    const caixaRef = doc(db, "controleFinanceiro", "caixa");
+    await updateDoc(caixaRef, {
+      saldoAtual: increment(valor)
+    });
+
     document.getElementById("descricaoEntrada").value = "";
     document.getElementById("valorEntrada").value = "";
 
@@ -190,26 +210,16 @@ async function adicionarSaida() {
 
   if (!descricao || !valor) return;
 
-  // calculate current balance using same logic from atualizarResumo
+  // Check current balance from controleFinanceiro/caixa
   let saldoAtualNum = 0;
   try {
-    const col = collection(db, "financeiro");
-    const q = query(col, orderBy("data", "desc"));
-    const snapshot = await getDocs(q);
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-
-    snapshot.forEach((doc) => {
-      const d = doc.data();
-      const tipo = d.tipo || "";
-      const v = Number(d.valor || 0);
-      if (tipo === "entrada") totalEntradas += v;
-      if (tipo === "saida") totalSaidas += v;
-    });
-
-    saldoAtualNum = totalEntradas - totalSaidas;
+    const caixaRef = doc(db, "controleFinanceiro", "caixa");
+    const snap = await getDoc(caixaRef);
+    if (snap.exists()) {
+      saldoAtualNum = snap.data().saldoAtual || 0;
+    }
   } catch (e) {
-    console.error("Erro ao calcular saldo antes de saída:", e);
+    console.error("Erro ao obter saldo antes de saída:", e);
   }
 
   if (valor > saldoAtualNum) {
@@ -223,6 +233,12 @@ async function adicionarSaida() {
       descricao,
       valor,
       data: Timestamp.now()
+    });
+
+    // Subtract from saldoAtual in controleFinanceiro/caixa
+    const caixaRef = doc(db, "controleFinanceiro", "caixa");
+    await updateDoc(caixaRef, {
+      saldoAtual: increment(-valor)
     });
 
     document.getElementById("descricaoSaida").value = "";
@@ -248,6 +264,12 @@ async function registrarRevista() {
       data: Timestamp.now()
     });
 
+    // Also increment saldoAtual
+    const caixaRef = doc(db, "controleFinanceiro", "caixa");
+    await updateDoc(caixaRef, {
+      saldoAtual: increment(valor)
+    });
+
     document.getElementById("nomeRevista").value = "";
     document.getElementById("valorRevista").value = "";
 
@@ -256,6 +278,29 @@ async function registrarRevista() {
     alert("Erro ao registrar revista: " + error.message);
   }
 }
+
+window.ajustarSaldoManual = async function () {
+  const novoSaldo = parseFloat(document.getElementById("novoSaldoManual").value);
+
+  if (isNaN(novoSaldo)) {
+    alert("Informe um valor válido.");
+    return;
+  }
+
+  try {
+    const caixaRef = doc(db, "controleFinanceiro", "caixa");
+    await updateDoc(caixaRef, {
+      saldoAtual: novoSaldo
+    });
+
+    document.getElementById("novoSaldoManual").value = "";
+    alert("Saldo ajustado com sucesso!");
+
+    await atualizarResumo();
+  } catch (error) {
+    alert("Erro ao ajustar saldo: " + error.message);
+  }
+};
 
 // Carrega os dados automaticamente ao abrir o painel
 document.addEventListener("DOMContentLoaded", () => {

@@ -25,7 +25,7 @@
 
   <h2>🎯 Atualizar Meta do Retiro</h2>
   <input type="number" id="novaMeta" placeholder="Meta total">
-  <input type="number" id="novoValor" placeholder="Valor arrecadado">
+  <input type="number" id="novoValor" placeholder="Adicionar valor">
   <button onclick="atualizarMeta()">Salvar Meta</button>
 
   <hr>
@@ -51,7 +51,13 @@
 
   <hr>
 
-  <h2>📊 Resumo Financeiro</h2>
+  <h2>⚙ Ajustar Saldo Manualmente</h2>
+  <input type="number" id="novoSaldoManual" placeholder="Novo saldo total">
+  <button onclick="ajustarSaldoManual()">Atualizar Saldo</button>
+
+  <hr>
+
+  <h2>�📊 Resumo Financeiro</h2>
   <div class="resumo-card">
     <p>Total Entradas: <span id="totalEntradas">0</span></p>
     <p>Total Saídas: <span id="totalSaidas">0</span></p>
