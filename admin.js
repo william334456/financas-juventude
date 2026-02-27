@@ -108,7 +108,11 @@ async function atualizarResumo() {
 
     if (totalEntradasEl) totalEntradasEl.innerText = formatter.format(totalEntradas);
     if (totalSaidasEl) totalSaidasEl.innerText = formatter.format(totalSaidas);
-    if (saldoEl) saldoEl.innerText = formatter.format(totalEntradas - totalSaidas);
+    const saldo = totalEntradas - totalSaidas;
+    if (saldoEl) {
+      saldoEl.innerText = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(saldo);
+      saldoEl.style.color = saldo < 0 ? "#ef4444" : "#22c55e";
+    }
 
     // update chart
     const ctx = document.getElementById('financeChart').getContext('2d');
