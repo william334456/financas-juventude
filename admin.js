@@ -67,8 +67,7 @@ async function atualizarResumo() {
 
   try {
     const col = collection(db, "financeiro");
-    const q = query(col, orderBy("data", "desc"));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(col);
     console.log(snapshot.size);
 
     let totalEntradas = 0;
