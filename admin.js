@@ -57,6 +57,8 @@ function logout() {
   document.getElementById("adminArea").style.display = "none";
 }
 
+let chartResumo = null;
+
 async function atualizarResumo() {
   const totalEntradasEl = document.getElementById("totalEntradas");
   const totalSaidasEl = document.getElementById("totalSaidas");
@@ -107,6 +109,34 @@ async function atualizarResumo() {
     if (totalEntradasEl) totalEntradasEl.innerText = formatter.format(totalEntradas);
     if (totalSaidasEl) totalSaidasEl.innerText = formatter.format(totalSaidas);
     if (saldoEl) saldoEl.innerText = formatter.format(totalEntradas - totalSaidas);
+
+    // update chart
+    const ctx = document.getElementById('chartResumo').getContext('2d');
+    const data = {
+      labels: ['Entradas', 'Saídas'],
+      datasets: [{
+        label: 'Valores',
+        data: [totalEntradas, totalSaidas],
+        backgroundColor: ['#4caf50', '#f44336']
+      }]
+    };
+
+    if (chartResumo) {
+      chartResumo.data = data;
+      chartResumo.update();
+    } else {
+      chartResumo = new Chart(ctx, {
+        type: 'bar',
+        data,
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
   } catch (error) {
     console.error("Erro ao carregar resumo financeiro:", error);
   }
