@@ -61,11 +61,21 @@ section, .card {
   color: white;
   padding: 20px;
   border-radius: 10px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 20px;
 }
 
 .resumo-card p {
-  margin: 5px 0;
+  margin: 0;
   font-size: 18px;
+  flex: 1;
+  text-align: center;
+  /* optional visual separation */
+  padding: 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
 }
 
 #saldoAtual {
