@@ -1,242 +1,201 @@
-// 🔥 Firebase v10 Modular - App Completo
+import { db, auth } from "./firebase.js";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  onSnapshot,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { 
+import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-import { 
-  doc, 
-  getDoc,
-  getDocs, 
-  collection,
-  updateDoc,
-  addDoc,
-  onSnapshot,
-  increment
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const metaRef = doc(db, "metaRetiro", "dados");
+const saidasRef = collection(db, "saidas");
 
-import { db, auth } from "./firebase.js";
+let meta = 0;
+let atual = 0;
 
-// =============================
-// 🔹 ATUALIZAR BARRA DE PROGRESSO
-// =============================
-function atualizarBarra(meta, arrecadado) {
-  const porcentagem = meta > 0 ? (arrecadado / meta) * 100 : 0;
-  const barraElement = document.getElementById("barraProgresso");
-  if (barraElement) {
-    barraElement.style.width = porcentagem + "%";
-  }
-}
+/* =========================
+   LOGIN
+========================= */
 
-// =============================
-// 🔹 CARREGAR META E ARRECADADO (Real-time)
-// =============================
-function carregarMetaRealTime() {
-  const docRef = doc(db, "metaRetiro", "dados");
-  
-  onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const dados = docSnap.data();
-      const meta = dados.meta || 0;
-      const arrecadado = dados.arrecadado || 0;
-
-      const metaElement = document.getElementById("metaValor");
-      const arrecadadoElement = document.getElementById("arrecadadoValor");
-
-      if (metaElement) metaElement.innerText = meta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      if (arrecadadoElement) arrecadadoElement.innerText = arrecadado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-      atualizarBarra(meta, arrecadado);
-    }
-  }, (error) => {
-    console.error("Erro ao carregar meta:", error);
-  });
-}
-
-// =============================
-// 🔹 CARREGAR SAÍDAS (Real-time)
-// =============================
-function carregarSaidasRealTime() {
-  const colRef = collection(db, "saidas");
-  
-  onSnapshot(colRef, (querySnapshot) => {
-    const lista = document.getElementById("listaSaidas");
-
-    if (!lista) return;
-
-    lista.innerHTML = "";
-
-    querySnapshot.forEach((doc) => {
-      const dados = doc.data();
-      const item = document.createElement("li");
-      const valor = parseFloat(dados.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      item.innerText = `${dados.descricao || "Saída"} - ${valor}`;
-      lista.appendChild(item);
-    });
-  }, (error) => {
-    console.error("Erro ao carregar saídas:", error);
-  });
-}
-
-// =============================
-// 🔹 AUTENTICAÇÃO - LOGIN
-// =============================
-async function login() {
-  const email = document.getElementById("email")?.value;
-  const senha = document.getElementById("senha")?.value;
-
-  if (!email || !senha) {
-    alert("Preencha email e senha");
-    return;
-  }
+window.login = async function () {
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
 
   try {
     await signInWithEmailAndPassword(auth, email, senha);
-    alert("Login realizado com sucesso!");
-    // Limpar campos
-    document.getElementById("email").value = "";
-    document.getElementById("senha").value = "";
+    alert("Login realizado!");
   } catch (error) {
-    console.error("Erro no login:", error);
     alert("Erro no login: " + error.message);
   }
-}
+};
 
-// =============================
-// 🔹 AUTENTICAÇÃO - LOGOUT
-// =============================
-async function logout() {
-  try {
-    await signOut(auth);
-    alert("Desconectado com sucesso!");
-  } catch (error) {
-    console.error("Erro ao desconectar:", error);
-    alert("Erro ao desconectar: " + error.message);
-  }
-}
+window.logout = async function () {
+  await signOut(auth);
+};
 
-// =============================
-// 🔹 MONITORAR ESTADO DE AUTENTICAÇÃO
-// =============================
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    console.log("✅ Usuário autenticado:", user.email);
-    const adminArea = document.getElementById("adminArea");
-    if (adminArea) {
+  const loginArea = document.getElementById("loginArea");
+  const adminArea = document.getElementById("adminArea");
+
+  if (loginArea && adminArea) {
+    if (user) {
+      loginArea.style.display = "none";
       adminArea.style.display = "block";
-    }
-  } else {
-    console.log("❌ Usuário não autenticado");
-    const adminArea = document.getElementById("adminArea");
-    if (adminArea) {
+    } else {
+      loginArea.style.display = "block";
       adminArea.style.display = "none";
     }
   }
 });
 
-// =============================
-// 🔹 ATUALIZAR META
-// =============================
-async function atualizarMeta() {
-  const novaMetaInput = document.getElementById("novaMetaInput")?.value;
+/* =========================
+   META EM TEMPO REAL
+========================= */
 
-  if (!novaMetaInput || isNaN(novaMetaInput) || parseFloat(novaMetaInput) <= 0) {
-    alert("Insira um valor válido para a meta");
-    return;
+onSnapshot(metaRef, (docSnap) => {
+  if (docSnap.exists()) {
+    const dados = docSnap.data();
+    meta = dados.meta;
+    atual = dados.atual;
+
+    atualizarTela();
   }
-
-  try {
-    const docRef = doc(db, "metaRetiro", "dados");
-    await updateDoc(docRef, {
-      meta: parseFloat(novaMetaInput)
-    });
-    alert("Meta atualizada com sucesso!");
-    document.getElementById("novaMetaInput").value = "";
-  } catch (error) {
-    console.error("Erro ao atualizar meta:", error);
-    alert("Erro ao atualizar meta: " + error.message);
-  }
-}
-
-// =============================
-// 🔹 ADICIONAR VALOR ARRECADADO
-// =============================
-async function adicionarValor() {
-  const valorInput = document.getElementById("valorInput")?.value;
-
-  if (!valorInput || isNaN(valorInput) || parseFloat(valorInput) <= 0) {
-    alert("Insira um valor válido");
-    return;
-  }
-
-  try {
-    const docRef = doc(db, "metaRetiro", "dados");
-    
-    // Usar increment para somar atomicamente
-    await updateDoc(docRef, {
-      arrecadado: increment(parseFloat(valorInput))
-    });
-
-    alert("Valor adicionado com sucesso!");
-    document.getElementById("valorInput").value = "";
-  } catch (error) {
-    console.error("Erro ao adicionar valor:", error);
-    alert("Erro ao adicionar valor: " + error.message);
-  }
-}
-
-// =============================
-// 🔹 REGISTRAR SAÍDA
-// =============================
-async function registrarSaida() {
-  const descricaoInput = document.getElementById("descricaoSaida")?.value;
-  const valorSaidaInput = document.getElementById("valorSaida")?.value;
-
-  if (!descricaoInput || !descricaoInput.trim()) {
-    alert("Insira uma descrição para a saída");
-    return;
-  }
-
-  if (!valorSaidaInput || isNaN(valorSaidaInput) || parseFloat(valorSaidaInput) <= 0) {
-    alert("Insira um valor válido para a saída");
-    return;
-  }
-
-  try {
-    const colRef = collection(db, "saidas");
-    await addDoc(colRef, {
-      descricao: descricaoInput.trim(),
-      valor: parseFloat(valorSaidaInput),
-      data: new Date()
-    });
-
-    alert("Saída registrada com sucesso!");
-    document.getElementById("descricaoSaida").value = "";
-    document.getElementById("valorSaida").value = "";
-  } catch (error) {
-    console.error("Erro ao registrar saída:", error);
-    alert("Erro ao registrar saída: " + error.message);
-  }
-}
-
-// =============================
-// 🚀 INICIALIZA
-// =============================
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 App iniciado");
-  carregarMetaRealTime();
-  carregarSaidasRealTime();
 });
 
-// =============================
-// 🌐 EXPONHA FUNÇÕES GLOBALMENTE
-// =============================
-window.login = login;
-window.logout = logout;
-window.atualizarMeta = atualizarMeta;
-window.adicionarValor = adicionarValor;
-window.registrarSaida = registrarSaida;
-window.carregarMetaRealTime = carregarMetaRealTime;
-window.carregarSaidasRealTime = carregarSaidasRealTime;
+function atualizarTela() {
+  const metaEl = document.getElementById("metaValor");
+  const arrecEl = document.getElementById("arrecadadoValor");
+  const barra = document.getElementById("barraProgresso");
+
+  if (metaEl) metaEl.innerText = meta;
+  if (arrecEl) arrecEl.innerText = atual;
+
+  if (barra && meta > 0) {
+    const porcentagem = (atual / meta) * 100;
+    barra.style.width = porcentagem + "%";
+  }
+}
+
+/* =========================
+   ATUALIZAR META
+========================= */
+
+window.atualizarMeta = async function () {
+  const novaMeta = Number(document.getElementById("novaMeta").value);
+  const novoValor = Number(document.getElementById("novoValor").value);
+
+  try {
+    await updateDoc(metaRef, {
+      meta: novaMeta,
+      atual: novoValor
+    });
+
+    alert("Meta atualizada!");
+  } catch (error) {
+    alert("Erro ao atualizar meta: " + error.message);
+  }
+};
+
+/* =========================
+   ADICIONAR ENTRADA
+========================= */
+
+window.adicionarEntrada = async function () {
+  const valor = Number(document.getElementById("valorEntrada").value);
+
+  try {
+    await updateDoc(metaRef, {
+      atual: atual + valor
+    });
+
+    alert("Entrada adicionada!");
+  } catch (error) {
+    alert("Erro ao adicionar entrada: " + error.message);
+  }
+};
+
+/* =========================
+   ADICIONAR SAÍDA
+========================= */
+
+window.adicionarSaida = async function () {
+  const descricao = document.getElementById("descricaoSaida").value;
+  const valor = Number(document.getElementById("valorSaida").value);
+
+  try {
+    await addDoc(saidasRef, {
+      descricao,
+      valor,
+      data: Timestamp.now()
+    });
+
+    await updateDoc(metaRef, {
+      atual: atual - valor
+    });
+
+    alert("Saída registrada!");
+  } catch (error) {
+    alert("Erro ao registrar saída: " + error.message);
+  }
+};
+
+/* =========================
+   REGISTRAR REVISTA
+========================= */
+
+window.registrarRevista = async function () {
+  const nome = document.getElementById("nomeRevista").value;
+  const valor = Number(document.getElementById("valorRevista").value);
+
+  if (!nome || !valor) {
+    alert("Preencha nome e valor da revista.");
+    return;
+  }
+
+  try {
+    const revistasRef = collection(db, "revistas");
+    await addDoc(revistasRef, {
+      nome,
+      valor,
+      data: Timestamp.now()
+    });
+
+    // também atualiza o total arrecadado
+    await updateDoc(metaRef, {
+      atual: atual + valor
+    });
+
+    alert("Revista registrada!");
+  } catch (error) {
+    alert("Erro ao registrar revista: " + error.message);
+  }
+};
+
+/* =========================
+   LISTAR SAÍDAS
+========================= */
+
+// (Nenhuma alteração necessária aqui, mas mantemos o comentário.)
+
+
+onSnapshot(saidasRef, (snapshot) => {
+  const lista = document.getElementById("listaSaidas");
+  if (!lista) return;
+
+  lista.innerHTML = "";
+
+  snapshot.forEach((doc) => {
+    const dados = doc.data();
+    const item = document.createElement("li");
+    item.innerText = `${dados.descricao} - R$ ${dados.valor}`;
+    lista.appendChild(item);
+  });
+});

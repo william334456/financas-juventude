@@ -1,11 +1,10 @@
-<!-- TESTE IDE CODEX -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Administrativo</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -38,6 +37,13 @@
 
   <hr>
 
+  <h2>💸 Nova Saída</h2>
+  <input type="text" id="descricaoSaida" placeholder="Descrição">
+  <input type="number" id="valorSaida" placeholder="Valor">
+  <button onclick="adicionarSaida()">Salvar Saída</button>
+
+  <hr>
+
   <h2>📘 Controle Revistas EBD</h2>
   <input type="text" id="nomeRevista" placeholder="Nome do jovem">
   <input type="number" id="valorRevista" placeholder="Valor pago">
@@ -47,9 +53,27 @@
 
   <h2>📊 Resumo Financeiro</h2>
   <p>Total Entradas: R$ <span id="totalEntradas">0</span></p>
+  <p>Total Saídas: R$ <span id="totalSaidas">0</span></p>
+  <p>Saldo Atual: R$ <span id="saldoAtual">0</span></p>
+
+  <hr>
+
+  <h2>📋 Histórico Financeiro</h2>
+  <table id="tabelaHistorico">
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
 </div>
 
 <script type="module" src="admin.js"></script>
+
 </body>
 </html>

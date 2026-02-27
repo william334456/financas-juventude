@@ -1,102 +1,78 @@
-import { auth, db } from "./firebase.js";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+let entradas = 0;
+let saidas = 0;
 
-import {
-  doc,
-  updateDoc,
-  addDoc,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+function login() {
+  document.getElementById("loginArea").style.display = "none";
+  document.getElementById("adminArea").style.display = "block";
+}
 
-// LOGIN
-window.login = function () {
-  const email = document.getElementById("email").value;
-  const senha = document.getElementById("senha").value;
+function logout() {
+  document.getElementById("loginArea").style.display = "block";
+  document.getElementById("adminArea").style.display = "none";
+}
 
-  signInWithEmailAndPassword(auth, email, senha)
-    .then(() => {
-      alert("Login realizado!");
-    })
-    .catch((error) => {
-      alert("Erro no login");
-    });
-};
+function atualizarResumo() {
+  document.getElementById("totalEntradas").innerText = entradas;
+  document.getElementById("totalSaidas").innerText = saidas;
+  document.getElementById("saldoAtual").innerText = entradas - saidas;
+}
 
-// LOGOUT
-window.logout = function () {
-  signOut(auth);
-};
+function adicionarLinha(tipo, descricao, valor) {
+  const tabela = document.querySelector("#tabelaHistorico tbody");
 
-// CONTROLE VISUAL
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById("loginArea").style.display = "none";
-    document.getElementById("adminArea").style.display = "block";
-    carregarResumo();
-  } else {
-    document.getElementById("loginArea").style.display = "block";
-    document.getElementById("adminArea").style.display = "none";
-  }
-});
+  const linha = document.createElement("tr");
 
-// ATUALIZAR META
-window.atualizarMeta = async function () {
-  const novaMeta = Number(document.getElementById("novaMeta").value);
-  const novoValor = Number(document.getElementById("novoValor").value);
+  linha.innerHTML = `
+    <td>${tipo}</td>
+    <td>${descricao}</td>
+    <td>R$ ${valor}</td>
+    <td>${new Date().toLocaleDateString()}</td>
+  `;
 
-  const docRef = doc(db, "metaRetiro", "dados");
+  tabela.appendChild(linha);
+}
 
-  await updateDoc(docRef, {
-    meta: novaMeta,
-    atual: novoValor
-  });
-
-  alert("Meta atualizada!");
-};
-
-// ADICIONAR ENTRADA
-window.adicionarEntrada = async function () {
+function adicionarEntrada() {
   const descricao = document.getElementById("descricaoEntrada").value;
-  const valor = Number(document.getElementById("valorEntrada").value);
+  const valor = parseFloat(document.getElementById("valorEntrada").value);
 
-  await addDoc(collection(db, "financeiro"), {
-    tipo: "entrada",
-    descricao: descricao,
-    valor: valor,
-    data: new Date()
-  });
+  if (!descricao || !valor) return;
 
-  alert("Entrada registrada!");
-  carregarResumo();
-};
+  entradas += valor;
 
-// REGISTRAR REVISTA
-window.registrarRevista = async function () {
+  adicionarLinha("Entrada", descricao, valor);
+  atualizarResumo();
+
+  document.getElementById("descricaoEntrada").value = "";
+  document.getElementById("valorEntrada").value = "";
+}
+
+function adicionarSaida() {
+  const descricao = document.getElementById("descricaoSaida").value;
+  const valor = parseFloat(document.getElementById("valorSaida").value);
+
+  if (!descricao || !valor) return;
+
+  saidas += valor;
+
+  adicionarLinha("Saída", descricao, valor);
+  atualizarResumo();
+
+  document.getElementById("descricaoSaida").value = "";
+  document.getElementById("valorSaida").value = "";
+}
+
+function registrarRevista() {
   const nome = document.getElementById("nomeRevista").value;
-  const valor = Number(document.getElementById("valorRevista").value);
+  const valor = parseFloat(document.getElementById("valorRevista").value);
 
-  await addDoc(collection(db, "revistas"), {
-    nome: nome,
-    valor: valor,
-    data: new Date()
-  });
+  if (!nome || !valor) return;
 
-  alert("Revista registrada!");
-};
+  entradas += valor;
 
-// CARREGAR RESUMO
-async function carregarResumo() {
-  const querySnapshot = await getDocs(collection(db, "financeiro"));
-  let total = 0;
+  adicionarLinha("Revista EBD", nome, valor);
+  atualizarResumo();
 
-  querySnapshot.forEach((doc) => {
-    total += doc.data().valor;
-  });
-
-  document.getElementById("totalEntradas").innerText = total;
+  document.getElementById("nomeRevista").value = "";
+  document.getElementById("valorRevista").value = "";
 }
