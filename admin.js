@@ -57,7 +57,7 @@ function logout() {
   document.getElementById("adminArea").style.display = "none";
 }
 
-let chartResumo = null;
+let financeChart = null;
 
 async function atualizarResumo() {
   const totalEntradasEl = document.getElementById("totalEntradas");
@@ -111,7 +111,7 @@ async function atualizarResumo() {
     if (saldoEl) saldoEl.innerText = formatter.format(totalEntradas - totalSaidas);
 
     // update chart
-    const ctx = document.getElementById('chartResumo').getContext('2d');
+    const ctx = document.getElementById('financeChart').getContext('2d');
     const data = {
       labels: ['Entradas', 'Saídas'],
       datasets: [{
@@ -121,11 +121,11 @@ async function atualizarResumo() {
       }]
     };
 
-    if (chartResumo) {
-      chartResumo.data = data;
-      chartResumo.update();
+    if (financeChart) {
+      financeChart.data = data;
+      financeChart.update();
     } else {
-      chartResumo = new Chart(ctx, {
+      financeChart = new Chart(ctx, {
         type: 'bar',
         data,
         options: {
