@@ -63,10 +63,13 @@ async function atualizarResumo() {
   const saldoEl = document.getElementById("saldoAtual");
   const tabelaBody = document.querySelector("#tabelaHistorico tbody");
 
+  console.log("Resumo carregando...");
+
   try {
     const col = collection(db, "financeiro");
     const q = query(col, orderBy("data", "desc"));
     const snapshot = await getDocs(q);
+    console.log(snapshot.size);
 
     let totalEntradas = 0;
     let totalSaidas = 0;
