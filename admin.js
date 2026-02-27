@@ -156,6 +156,33 @@ async function adicionarSaida() {
 
   if (!descricao || !valor) return;
 
+  // calculate current balance using same logic from atualizarResumo
+  let saldoAtualNum = 0;
+  try {
+    const col = collection(db, "financeiro");
+    const q = query(col, orderBy("data", "desc"));
+    const snapshot = await getDocs(q);
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    snapshot.forEach((doc) => {
+      const d = doc.data();
+      const tipo = d.tipo || "";
+      const v = Number(d.valor || 0);
+      if (tipo === "entrada") totalEntradas += v;
+      if (tipo === "saida") totalSaidas += v;
+    });
+
+    saldoAtualNum = totalEntradas - totalSaidas;
+  } catch (e) {
+    console.error("Erro ao calcular saldo antes de saída:", e);
+  }
+
+  if (valor > saldoAtualNum) {
+    alert("Saldo insuficiente");
+    return;
+  }
+
   try {
     await addDoc(collection(db, "financeiro"), {
       tipo: "saida",
