@@ -333,13 +333,13 @@ async function atualizarProximoEvento() {
 
     if (proximoEvento) {
       proximoEventoEl.innerHTML = `
-        <h3>${proximoEvento.titulo}</h3>
-        <p><strong>Data:</strong> ${proximoEvento.data.toLocaleDateString("pt-BR")}</p>
-        <p><strong>Descrição:</strong> ${proximoEvento.descricao}</p>
-        <p><strong>Local:</strong> ${proximoEvento.local}</p>
+        <p><strong>📅 ${proximoEvento.titulo}</strong></p>
+        <p>🗓 Data: ${proximoEvento.data.toLocaleDateString("pt-BR")}</p>
+        <p>📍 Local: ${proximoEvento.local}</p>
+        <p>📝 Descrição: ${proximoEvento.descricao}</p>
       `;
     } else {
-      proximoEventoEl.innerHTML = "<p>Nenhum evento agendado.</p>";
+      proximoEventoEl.innerHTML = "<p>Nenhum evento futuro agendado.</p>";
     }
   } catch (error) {
     console.error("Erro ao atualizar próximo evento:", error);

@@ -12,11 +12,6 @@
 
 <h1>Painel da Liderança</h1>
 
-<h2>📌 Próximo Evento</h2>
-<div id="proximoEvento" class="evento-destaque"></div>
-<hr>
-<h2>📅 Calendário de Eventos</h2>
-<div id="calendar"></div>
 <!-- LOGIN -->
 <div id="loginArea">
   <h2>Login</h2>
@@ -29,6 +24,14 @@
 <div id="adminArea" style="display:none;">
 
   <button onclick="logout()">Sair</button>
+
+  <h2>📌 Próximo Evento</h2>
+  <div id="proximoEvento" class="evento-destaque"></div>
+
+  <h2>📅 Calendário de Eventos</h2>
+  <div id="calendar"></div>
+
+  <hr>
 
   <h2>🎯 Atualizar Meta do Retiro</h2>
   <input type="number" id="novaMeta" placeholder="Meta total">
@@ -63,9 +66,7 @@
   <button onclick="ajustarSaldoManual()">Atualizar Saldo</button>
 
   <hr>
-  <div id="calendar"></div>
 
-  <hr>
   <h2>�📊 Resumo Financeiro</h2>
   <div class="resumo-card">
     <p>Total Entradas: <span id="totalEntradas">0</span></p>
