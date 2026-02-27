@@ -302,10 +302,116 @@ window.ajustarSaldoManual = async function () {
   }
 };
 
+async function atualizarProximoEvento() {
+  const proximoEventoEl = document.getElementById("proximoEvento");
+  if (!proximoEventoEl) return;
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const q = query(collection(db, "eventos"), orderBy("data", "asc"));
+    const snapshot = await getDocs(q);
+
+    let proximoEvento = null;
+
+    snapshot.forEach((doc) => {
+      const e = doc.data();
+      const eventDate = e.data && typeof e.data.toDate === "function" 
+        ? e.data.toDate() 
+        : (e.data ? new Date(e.data) : null);
+
+      if (eventDate && eventDate >= today && !proximoEvento) {
+        proximoEvento = {
+          titulo: e.titulo || "Evento",
+          descricao: e.descricao || "",
+          local: e.local || "",
+          data: eventDate
+        };
+      }
+    });
+
+    if (proximoEvento) {
+      proximoEventoEl.innerHTML = `
+        <h3>${proximoEvento.titulo}</h3>
+        <p><strong>Data:</strong> ${proximoEvento.data.toLocaleDateString("pt-BR")}</p>
+        <p><strong>Descrição:</strong> ${proximoEvento.descricao}</p>
+        <p><strong>Local:</strong> ${proximoEvento.local}</p>
+      `;
+    } else {
+      proximoEventoEl.innerHTML = "<p>Nenhum evento agendado.</p>";
+    }
+  } catch (error) {
+    console.error("Erro ao atualizar próximo evento:", error);
+  }
+}
+
+async function initializeCalendar() {
+  const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) return;
+
+  try {
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'pt-br',
+      selectable: true,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      dateClick: async function(info) {
+        const titulo = prompt("Título do evento:");
+        if (!titulo) return;
+
+        const descricao = prompt("Descrição do evento:");
+        const local = prompt("Local do evento:");
+
+        await addDoc(collection(db, "eventos"), {
+          titulo,
+          descricao,
+          local,
+          data: new Date(info.dateStr)
+        });
+
+        calendar.addEvent({
+          title: titulo,
+          start: info.dateStr
+        });
+
+        await atualizarProximoEvento();
+      }
+    });
+
+    // Load events from Firestore
+    const snapshot = await getDocs(collection(db, "eventos"));
+    snapshot.forEach((doc) => {
+      const e = doc.data();
+      const eventDate = e.data && typeof e.data.toDate === "function" 
+        ? e.data.toDate() 
+        : (e.data ? new Date(e.data) : null);
+
+      calendar.addEvent({
+        id: doc.id,
+        title: e.titulo || "Evento",
+        start: eventDate,
+        description: e.descricao || ""
+      });
+    });
+
+    calendar.render();
+  } catch (error) {
+    console.error("Erro ao carregar eventos do calendário:", error);
+  }
+}
+
 // Carrega os dados automaticamente ao abrir o painel
 document.addEventListener("DOMContentLoaded", () => {
   atualizarResumo();
+  initializeCalendar();
+  atualizarProximoEvento();
 });
 
-// tornar a função acessível globalmente para debugging ou chamadas externas
+// tornar as funções acessíveis globalmente para debugging ou chamadas externas
 window.atualizarResumo = atualizarResumo;
+window.atualizarProximoEvento = atualizarProximoEvento;
