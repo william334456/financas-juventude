@@ -1,3 +1,6 @@
+import { db } from "./firebase.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 let entradas = 0;
 let saidas = 0;
 
@@ -5,6 +8,41 @@ function login() {
   document.getElementById("loginArea").style.display = "none";
   document.getElementById("adminArea").style.display = "block";
 }
+
+// atualiza o valor arrecadado incrementando o campo 'atual' no Firestore
+window.atualizarMeta = async function () {
+  const novoValor = Number(document.getElementById("novoValor").value);
+  const novaMeta = Number(document.getElementById("novaMeta").value);
+
+  if (isNaN(novoValor)) {
+    alert("Informe um valor válido para adicionar.");
+    return;
+  }
+
+  try {
+    const ref = doc(db, "metaRetiro", "dados");
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Documento de meta não encontrado.");
+      return;
+    }
+
+    const data = snap.data();
+    const atual = data.atual || 0;
+    const novoTotal = atual + novoValor;
+
+    const updateData = { atual: novoTotal };
+    if (!isNaN(novaMeta) && novaMeta > 0) {
+      updateData.meta = novaMeta;
+    }
+
+    await updateDoc(ref, updateData);
+    alert("Meta atualizada!");
+  } catch (error) {
+    alert("Erro ao atualizar meta: " + error.message);
+  }
+};
 
 function logout() {
   document.getElementById("loginArea").style.display = "block";
