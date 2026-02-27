@@ -196,3 +196,6 @@ async function registrarRevista() {
 document.addEventListener("DOMContentLoaded", () => {
   atualizarResumo();
 });
+
+// tornar a função acessível globalmente para debugging ou chamadas externas
+window.atualizarResumo = atualizarResumo;
