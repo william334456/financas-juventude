@@ -187,3 +187,8 @@ async function registrarRevista() {
     alert("Erro ao registrar revista: " + error.message);
   }
 }
+
+// Carrega os dados automaticamente ao abrir o painel
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarResumo();
+});
