@@ -63,6 +63,11 @@ async function atualizarResumo() {
   const saldoEl = document.getElementById("saldoAtual");
   const tabelaBody = document.querySelector("#tabelaHistorico tbody");
 
+  const formatter = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+
   console.log("Resumo carregando...");
 
   try {
@@ -91,7 +96,7 @@ async function atualizarResumo() {
         tr.innerHTML = `
           <td>${tipo}</td>
           <td>${d.descricao || ""}</td>
-          <td>R$ ${valor}</td>
+          <td>${formatter.format(valor)}</td>
           <td>${dateStr}</td>
         `;
 
@@ -99,9 +104,9 @@ async function atualizarResumo() {
       }
     });
 
-    if (totalEntradasEl) totalEntradasEl.innerText = totalEntradas;
-    if (totalSaidasEl) totalSaidasEl.innerText = totalSaidas;
-    if (saldoEl) saldoEl.innerText = totalEntradas - totalSaidas;
+    if (totalEntradasEl) totalEntradasEl.innerText = formatter.format(totalEntradas);
+    if (totalSaidasEl) totalSaidasEl.innerText = formatter.format(totalSaidas);
+    if (saldoEl) saldoEl.innerText = formatter.format(totalEntradas - totalSaidas);
   } catch (error) {
     console.error("Erro ao carregar resumo financeiro:", error);
   }
