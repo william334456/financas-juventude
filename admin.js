@@ -14,6 +14,7 @@ import {
 function login() {
   document.getElementById("loginArea").style.display = "none";
   document.getElementById("adminArea").style.display = "block";
+  atualizarResumo();
 }
 
 // atualiza o valor arrecadado incrementando o campo 'atual' no Firestore
